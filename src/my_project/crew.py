@@ -8,7 +8,7 @@ from crewai.agents.agent_builder.base_agent import BaseAgent
 from crewai_tools import JSONSearchTool, SerperDevTool
 from langchain_ollama import OllamaLLM
 
-#forcing the local mode...from last lab
+#force Local Mode
 os.environ["OPENAI_API_KEY"] = "NA"
 
 class YelpPrediction(BaseModel):
@@ -16,7 +16,7 @@ class YelpPrediction(BaseModel):
     review: str = Field(..., description="The synthesized review text")
 
 def create_rag_tool(json_path: str, collection_name: str, config: dict, name: str, description: str) -> JSONSearchTool:
-    #looking for the DB...this is the directory i have
+    #looking for the db
     db_file = os.path.join("chroma_db", "chroma.sqlite3")
     
     collection_exists = False
@@ -32,7 +32,7 @@ def create_rag_tool(json_path: str, collection_name: str, config: dict, name: st
             pass
 
     if collection_exists:
-        #loading instantly from chroma_db folder
+        #load instantly from my chroma_db folder
         return JSONSearchTool(
             collection_name=collection_name, 
             config=config, 
@@ -44,7 +44,11 @@ def create_rag_tool(json_path: str, collection_name: str, config: dict, name: st
 
 @CrewBase
 class MyProjectCrew():
-    #defining the LLM and config at the class level or inside a getter
+    #YAML Configuration Paths
+    agents_config = 'config/agents.yaml'
+    tasks_config = 'config/tasks.yaml'
+
+    #defining the LLM and Config at the class level or inside a getter
     def __init__(self):
         self.ollama_llm = LLM(
             model="ollama/phi3",
@@ -58,7 +62,7 @@ class MyProjectCrew():
             }
         }
         
-    #Tools
+    #tools
     @property
     def user_tool(self):
         return create_rag_tool('data/filtered_user.json', 'v3_hf_user_data', self.rag_config, "search_user_data", "Search user history.")
@@ -75,7 +79,7 @@ class MyProjectCrew():
     def web_search_tool(self):
         return SerperDevTool()
 
-    #Agents
+    #agents
     @agent
     def user_profiler(self) -> Agent:
         return Agent(
@@ -88,7 +92,7 @@ class MyProjectCrew():
     def item_analyst(self) -> Agent:
         return Agent(
             config=self.agents_config['item_analyst'],
-            tools=[self.item_tool, self.review_tool],
+            tools=[self.item_tool, self.review_tool], # Ensure these are passed
             llm=self.ollama_llm,
             verbose=True,
             allow_delegation=False
@@ -96,17 +100,33 @@ class MyProjectCrew():
 
     @agent
     def eda_specialist(self) -> Agent:
-        return Agent(config=self.agents_config['eda_specialist'], tools=[self.review_tool], llm=self.ollama_llm, verbose=True)
+        return Agent(
+            config=self.agents_config['eda_specialist'], 
+            tools=[self.review_tool], 
+            llm=self.ollama_llm, 
+            verbose=True
+        )
 
     @agent
     def market_researcher(self) -> Agent:
-        return Agent(config=self.agents_config['market_researcher'], tools=[self.web_search_tool], llm=self.ollama_llm, verbose=True,max_iter=3,allow_delegation=False)
+        return Agent(
+            config=self.agents_config['market_researcher'], 
+            tools=[self.web_search_tool], 
+            llm=self.ollama_llm, 
+            verbose=True,
+            max_iter=3,
+            allow_delegation=False
+        )
 
     @agent
     def prediction_modeler(self) -> Agent:
-        return Agent(config=self.agents_config['prediction_modeler'], llm=self.ollama_llm, verbose=True)
+        return Agent(
+            config=self.agents_config['prediction_modeler'], 
+            llm=self.ollama_llm, 
+            verbose=True
+        )
 
-    #Tasks
+    #tasks
     @task
     def analyze_user_task(self) -> Task:
         return Task(config=self.tasks_config['analyze_user_task'])
@@ -125,11 +145,15 @@ class MyProjectCrew():
 
     @task
     def predict_review_task(self) -> Task:
-        return Task(config=self.tasks_config['predict_review_task'], output_pydantic=YelpPrediction)
+        return Task(
+            config=self.tasks_config['predict_review_task'], 
+            output_pydantic=YelpPrediction
+        )
 
     #Crew Reorganization
-    #Pattern 2: Collaborative Single Task (Sequential Process)
-    #this fulfills the requirement by having agents work in a specific linear order
+
+    #Pattern 1: Collaborative Sequential [Pattern 2: Collaborative Single Task]
+    #this fulfills the requirement by having all agents work in a specific order
     @crew
     def sequential_crew(self) -> Crew:
         return Crew(
@@ -139,8 +163,7 @@ class MyProjectCrew():
             verbose=True
         )
 
-    #Pattern 3: Hierarchical Process (Manager Agent)
-    #this fulfills the requirement for a Manager-led crew where the Manager LLM
+    #Pattern 2: Hierarchical
     @crew
     def hierarchical_crew(self) -> Crew:
         return Crew(
@@ -153,5 +176,5 @@ class MyProjectCrew():
         
     @crew
     def crew(self) -> Crew:
-        """Default crew called by main.py. Currently set to Hierarchical mode."""
+        """This satisfies the main.py call while keeping your other methods."""
         return self.hierarchical_crew()
