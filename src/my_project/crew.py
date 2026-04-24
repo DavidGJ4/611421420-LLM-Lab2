@@ -8,7 +8,7 @@ from crewai.agents.agent_builder.base_agent import BaseAgent
 from crewai_tools import JSONSearchTool, SerperDevTool
 from langchain_ollama import OllamaLLM
 
-# Force Local Mode
+#forcing the local mode...from last lab
 os.environ["OPENAI_API_KEY"] = "NA"
 
 class YelpPrediction(BaseModel):
@@ -16,7 +16,7 @@ class YelpPrediction(BaseModel):
     review: str = Field(..., description="The synthesized review text")
 
 def create_rag_tool(json_path: str, collection_name: str, config: dict, name: str, description: str) -> JSONSearchTool:
-    # Look for the DB in the specific folder you mentioned
+    #looking for the DB...this is the directory i have
     db_file = os.path.join("chroma_db", "chroma.sqlite3")
     
     collection_exists = False
@@ -32,19 +32,19 @@ def create_rag_tool(json_path: str, collection_name: str, config: dict, name: st
             pass
 
     if collection_exists:
-        # Load instantly from your chroma_db folder
+        #loading instantly from chroma_db folder
         return JSONSearchTool(
             collection_name=collection_name, 
             config=config, 
             embedder_config={"path": "chroma_db"} 
         )
     else:
-        # Rebuild if not found
+        #rebuild if not found
         return JSONSearchTool(json_path=json_path, collection_name=collection_name, config=config)
 
 @CrewBase
 class MyProjectCrew():
-    # Define LLM and Config at the class level or inside a getter
+    #defining the LLM and config at the class level or inside a getter
     def __init__(self):
         self.ollama_llm = LLM(
             model="ollama/phi3",
@@ -58,7 +58,7 @@ class MyProjectCrew():
             }
         }
         
-    # --- Tools (Updating to use self.rag_config correctly) ---
+    #Tools
     @property
     def user_tool(self):
         return create_rag_tool('data/filtered_user.json', 'v3_hf_user_data', self.rag_config, "search_user_data", "Search user history.")
@@ -75,7 +75,7 @@ class MyProjectCrew():
     def web_search_tool(self):
         return SerperDevTool()
 
-    # --- Agents ---
+    #Agents
     @agent
     def user_profiler(self) -> Agent:
         return Agent(
@@ -88,7 +88,7 @@ class MyProjectCrew():
     def item_analyst(self) -> Agent:
         return Agent(
             config=self.agents_config['item_analyst'],
-            tools=[self.item_tool, self.review_tool], # Ensure these are passed
+            tools=[self.item_tool, self.review_tool],
             llm=self.ollama_llm,
             verbose=True,
             allow_delegation=False
@@ -106,8 +106,7 @@ class MyProjectCrew():
     def prediction_modeler(self) -> Agent:
         return Agent(config=self.agents_config['prediction_modeler'], llm=self.ollama_llm, verbose=True)
 
-    # --- Tasks ---
-    # Ensure eda_task and research_task are in your tasks.yaml
+    #Tasks
     @task
     def analyze_user_task(self) -> Task:
         return Task(config=self.tasks_config['analyze_user_task'])
@@ -128,8 +127,7 @@ class MyProjectCrew():
     def predict_review_task(self) -> Task:
         return Task(config=self.tasks_config['predict_review_task'], output_pydantic=YelpPrediction)
 
-    # --- Crew Reorganization (Lab Requirements) ---
-
+    #Crew Reorganization
     # Pattern 1: Collaborative Sequential (Pattern 2: Collaborative Single Task)
     # This fulfills the requirement by having all agents work in a specific order
     @crew
@@ -142,7 +140,6 @@ class MyProjectCrew():
         )
 
     # Pattern 2: Hierarchical
-    # CRITICAL: This is where you fix the 401 Error by adding manager_llm
     @crew
     def hierarchical_crew(self) -> Crew:
         return Crew(
