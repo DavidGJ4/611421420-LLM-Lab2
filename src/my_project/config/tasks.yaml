@@ -1,0 +1,42 @@
+eda_task:
+  description: >
+    Analyze 'review_subset.json' for user {user_id}. Establish a statistical 
+    baseline: What is their median star rating? Do they have a positive or negative bias?
+  expected_output: >
+    A statistical summary report of the user's rating distribution.
+  agent: eda_specialist
+
+analyze_user_task:
+  description: >
+    Identify the user's specific "voice" and preferences from their history.
+  expected_output: >
+    A Markdown User Persona report.
+  agent: user_profiler
+
+analyze_item_task:
+  description: >
+    Analyze the business with ID {item_id}. 
+    Use your tools to search specifically within 'data/filtered_item.json' 
+    and 'data/train_review.json'. Do not look for files in any other directory.
+    Identify signature traits, price range, and the overall 'soul' of the place.
+  expected_output: >
+    A comprehensive report on the item's latent features and characteristics.
+  agent: item_analyst
+
+research_task:
+  description: >
+    Search for any external information about {item_id} online to provide 
+    current context to the crew.
+  expected_output: >
+    A report on external market factors.
+  agent: market_researcher
+
+predict_review_task:
+  description: >
+    Combine the Persona, Business Evaluation, EDA results, and Research. 
+    Write a review that reflects the ACTUAL features of the business through 
+    the ACTUAL lens of the user.
+  expected_output: >
+    A JSON object containing ONLY 'stars' (float) and 'review' (string).
+  agent: prediction_modeler
+  context: [eda_task, analyze_user_task, analyze_item_task, research_task]
