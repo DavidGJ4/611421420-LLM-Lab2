@@ -128,8 +128,8 @@ class MyProjectCrew():
         return Task(config=self.tasks_config['predict_review_task'], output_pydantic=YelpPrediction)
 
     #Crew Reorganization
-    # Pattern 1: Collaborative Sequential (Pattern 2: Collaborative Single Task)
-    # This fulfills the requirement by having all agents work in a specific order
+    #Pattern 2: Collaborative Single Task (Sequential Process)
+    #this fulfills the requirement by having agents work in a specific linear order
     @crew
     def sequential_crew(self) -> Crew:
         return Crew(
@@ -139,7 +139,8 @@ class MyProjectCrew():
             verbose=True
         )
 
-    # Pattern 2: Hierarchical
+    #Pattern 3: Hierarchical Process (Manager Agent)
+    #this fulfills the requirement for a Manager-led crew where the Manager LLM
     @crew
     def hierarchical_crew(self) -> Crew:
         return Crew(
@@ -152,5 +153,5 @@ class MyProjectCrew():
         
     @crew
     def crew(self) -> Crew:
-        """This satisfies the main.py call while keeping your other methods."""
+        """Default crew called by main.py. Currently set to Hierarchical mode."""
         return self.hierarchical_crew()
