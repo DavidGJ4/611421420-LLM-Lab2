@@ -59,6 +59,10 @@ class MyProjectCrew():
             "embedding_model": {
                 "provider": "sentence-transformer",
                 "config": {"model_name": "BAAI/bge-small-en-v1.5"}
+            },
+            "search_config": {
+                "n_results": 1,
+                "max_content_length": 500
             }
         }
         
@@ -141,13 +145,14 @@ class MyProjectCrew():
 
     @task
     def research_task(self) -> Task:
-        return Task(config=self.tasks_config['research_task'])
+        return Task(
+            config=self.tasks_config['research_task']
+        )
 
     @task
     def predict_review_task(self) -> Task:
         return Task(
-            config=self.tasks_config['predict_review_task'], 
-            output_pydantic=YelpPrediction
+            config=self.tasks_config['predict_review_task']
         )
 
     #Crew Reorganization

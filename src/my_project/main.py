@@ -35,31 +35,51 @@ def extract_json_from_output(raw_output: str) -> dict:
     except json.JSONDecodeError:
         return {"stars": 0.0, "review": text, "_error": "Failed to parse JSON"}
 
-def run():
-    #loading the test case
+def run(crew_type="Sequential"):#defualt is the sequential
     test_json_path = "data/test_review_subset.json"
     with open(test_json_path, 'r', encoding='utf-8') as f:
         test_case = json.loads(f.readline())
 
-    inputs = {
-        'user_id': test_case['user_id'],
-        'item_id': test_case['item_id']
-    }
+    inputs = {'user_id': test_case['user_id'], 'item_id': test_case['item_id']}
+    
+    #initialize the project
+    project = MyProjectCrew()
 
-    print(f"--- Running Prediction for User: {inputs['user_id']} ---")
-
-    #kickoff the Crew
     try:
-        result = MyProjectCrew().sequential_crew().kickoff(inputs=inputs)
-        
-        #saving the result
-        report = extract_json_from_output(result.raw)
+        #determining which crew to kickoff based on the pattern you want to test
+        if crew_type == "Hierarchical":
+            result = project.hierarchical_crew().kickoff(inputs=inputs)
+        else:
+            result = project.sequential_crew().kickoff(inputs=inputs)
+
+        prediction_data = extract_json_from_output(result.raw)
+        task_results = result.tasks_output
+
+        formatted_report = {
+            "execution_metadata": {
+                "process_pattern": crew_type,
+                "model_used": "ollama/phi3",
+                "user_id": inputs['user_id']
+            },
+            "prediction_output": prediction_data,
+            "pattern_breakdown": {
+                # Single Task Pattern
+                "final_synthesis_pattern": "Collaborative Single Task", 
+                "individual_contributions": {
+                    "user_profiler_output": task_results[0].raw if len(task_results) > 0 else "N/A",
+                    "item_analyst_output": task_results[1].raw if len(task_results) > 1 else "N/A",
+                    "eda_specialist_output": task_results[2].raw if len(task_results) > 2 else "N/A"
+                }
+            }
+        }
+
         with open('report.json', 'w', encoding='utf-8') as f:
-            json.dump(report, f, indent=2)
+            json.dump(formatted_report, f, indent=2, ensure_ascii=False)
             
-        print(f"\nDONE! Prediction: {report.get('stars')} stars.")
+        print(f"Report saved! Pattern used: {crew_type}")
+
     except Exception as e:
         print(f"Error: {e}")
 
 if __name__ == "__main__":
-    run()
+    run(crew_type="Hierarchical")
