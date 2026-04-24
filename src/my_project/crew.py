@@ -92,7 +92,7 @@ class MyProjectCrew():
     def item_analyst(self) -> Agent:
         return Agent(
             config=self.agents_config['item_analyst'],
-            tools=[self.item_tool, self.review_tool], # Ensure these are passed
+            tools=[self.item_tool, self.review_tool],
             llm=self.ollama_llm,
             verbose=True,
             allow_delegation=False
@@ -176,5 +176,5 @@ class MyProjectCrew():
         
     @crew
     def crew(self) -> Crew:
-        """This satisfies the main.py call while keeping your other methods."""
+        """This satisfies the main.py call while keeping other methods."""
         return self.hierarchical_crew()
