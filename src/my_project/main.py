@@ -16,10 +16,10 @@ class YelpPredictionFlow(Flow):
 
     @listen(run_prediction_crew)
     def save_report(self, result):
-        # ... logic to save report.json ...
+        #logic save to report.json
         print("Flow Complete!")
 
-# To run: YelpPredictionFlow().kickoff()
+#this is to run: YelpPredictionFlow().kickoff()
 def extract_json_from_output(raw_output: str) -> dict:
     """Sanitize LLM output to ensure we get valid JSON."""
     text = str(raw_output).strip()
@@ -36,7 +36,7 @@ def extract_json_from_output(raw_output: str) -> dict:
         return {"stars": 0.0, "review": text, "_error": "Failed to parse JSON"}
 
 def run():
-    # 1. Load your test case
+    #loading the test case
     test_json_path = "data/test_review_subset.json"
     with open(test_json_path, 'r', encoding='utf-8') as f:
         test_case = json.loads(f.readline())
@@ -48,11 +48,11 @@ def run():
 
     print(f"--- Running Prediction for User: {inputs['user_id']} ---")
 
-    # 2. Kickoff the Crew
+    #kickoff the Crew
     try:
         result = MyProjectCrew().sequential_crew().kickoff(inputs=inputs)
         
-        # 3. Save the result
+        #saving the result
         report = extract_json_from_output(result.raw)
         with open('report.json', 'w', encoding='utf-8') as f:
             json.dump(report, f, indent=2)
